@@ -1,122 +1,86 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { searchTitles } from './api/tmdb';
+import type { SearchResult } from './types';
+import './App.css';
+
+const IMG_URL = 'https://image.tmdb.org/t/p/w185';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    // Debounce: wait 400 ms after the user stops typing.
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        setResults(await searchTitles(trimmed, controller.signal));
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') {
+          setError('Something went wrong. Try again.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main className="app">
+      <h1>Where to watch</h1>
+      <input
+        type="search"
+        placeholder="Search a movie or series"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
 
-      <div className="ticks"></div>
+      {loading && <p>Loading…</p>}
+      {error && <p className="error">{error}</p>}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
+      <ul className="results">
+        {results.map((r) => {
+          const main = r.title ?? r.name;
+          const original = r.original_title ?? r.original_name;
+          const date = r.release_date ?? r.first_air_date;
+          return (
+            <li key={`${r.media_type}-${r.id}`}>
+              {r.poster_path ? (
+                <img src={`${IMG_URL}${r.poster_path}`} alt={main} />
+              ) : (
+                <div className="no-poster" />
+              )}
+              <div>
+                <strong>{main}</strong>
+                {original && original !== main && (
+                  <div className="subtitle">{original}</div>
+                )}
+                <div className="meta">
+                  {r.media_type === 'movie' ? 'Movie' : 'Series'}
+                  {date && ` · ${date.slice(0, 4)}`}
+                </div>
+              </div>
             </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          );
+        })}
+      </ul>
+    </main>
+  );
 }
 
-export default App
+export default App;
