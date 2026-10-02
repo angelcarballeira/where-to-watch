@@ -6,8 +6,21 @@ import type { Region, SearchResult } from './types';
 
 const IMG_URL = 'https://image.tmdb.org/t/p/w185';
 
+function readUrl() {
+  const p = new URLSearchParams(window.location.search);
+  return { q: p.get('q') ?? '', sel: p.get('sel') };
+}
+
+function buildUrl(q: string, sel: string | null) {
+  const p = new URLSearchParams();
+  if (q.trim()) p.set('q', q);
+  if (sel) p.set('sel', sel);
+  const s = p.toString();
+  return s ? `?${s}` : window.location.pathname;
+}
+
 function App() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => readUrl().q);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +29,9 @@ function App() {
   const [country, setCountry] = useState(
     () => localStorage.getItem('country') ?? 'AR',
   );
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(
+    () => readUrl().sel,
+  );
 
   useEffect(() => {
     getRegions().then(setRegions).catch(() => setRegions([]));
@@ -54,6 +69,31 @@ function App() {
     };
   }, [query]);
 
+  function handleQueryChange(value: string) {
+    // First character of a new search: add a history entry.
+    // While refining the search: replace it, so Back doesn't step through every letter.
+    const startingSearch = query.trim() === '' && value.trim() !== '';
+    const method = startingSearch ? 'pushState' : 'replaceState';
+    window.history[method](null, '', buildUrl(value, selectedKey));
+    setQuery(value);
+  }
+
+  function handleSelect(key: string) {
+    const next = key === selectedKey ? null : key;
+    window.history.pushState(null, '', buildUrl(query, next));
+    setSelectedKey(next);
+  }
+
+  useEffect(() => {
+    const onPop = () => {
+      const { q, sel } = readUrl();
+      setQuery(q);
+      setSelectedKey(sel);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-100 text-gray-900 dark:from-slate-950 dark:via-indigo-950 dark:to-blue-950 dark:text-gray-100">
       <main className="mx-auto max-w-2xl p-6">
@@ -72,7 +112,7 @@ function App() {
           type="search"
           placeholder="Busca una película o serie"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => handleQueryChange(e.target.value)}
           className="w-full rounded-lg border border-gray-300 bg-white/70 dark:bg-white/5 p-3 outline-none focus:border-blue-500 dark:border-gray-700"
         />
 
@@ -91,7 +131,7 @@ function App() {
               <li key={key} className="py-3">
                 <button
                   type="button"
-                  onClick={() => setSelectedKey(isSelected ? null : key)}
+                  onClick={() => handleSelect(key)}
                   aria-expanded={isSelected}
                   className="flex w-full gap-3 text-left"
                 >
@@ -99,10 +139,10 @@ function App() {
                     <img
                       src={`${IMG_URL}${r.poster_path}`}
                       alt=""
-                      className="h-[92px] w-16 shrink-0 rounded-md object-cover"
+                      className="h-23 w-16 shrink-0 rounded-md object-cover"
                     />
                   ) : (
-                    <div className="h-[92px] w-16 shrink-0 rounded-md bg-gray-200 dark:bg-gray-800" />
+                    <div className="h-23 w-16 shrink-0 rounded-md bg-gray-200 dark:bg-gray-800" />
                   )}
                   <div>
                     <strong>{main}</strong>
@@ -117,7 +157,7 @@ function App() {
                 </button>
 
                 {isSelected && (
-                  <div className="mt-3 pl-[76px]">
+                  <div className="mt-3 pl-19">
                     <ProviderList item={r} country={country} />
                   </div>
                 )}

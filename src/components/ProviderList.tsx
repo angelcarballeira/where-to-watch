@@ -37,14 +37,14 @@ export default function ProviderList({ item, country }: Props) {
     return () => controller.abort();
   }, [item.id, item.media_type]);
 
-  if (loading) return <p className="text-sm text-gray-500">Loading providers…</p>;
+  if (loading) return <p className="text-sm text-gray-500">Cargando proveedores...</p>;
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   const info = data?.[country];
   if (!info) {
     return (
       <p className="text-sm text-gray-500">
-        Not available on any platform in this country.
+        No se encontraron proveedores en esta región.
       </p>
     );
   }
