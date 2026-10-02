@@ -25,11 +25,7 @@ export default function CountrySelect({ regions, value, onChange }: Props) {
       className="rounded-lg border border-gray-300 bg-white p-2 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100"
     >
       {options.map((o) => (
-        <option
-          key={o.code}
-          value={o.code}
-          className="bg-white text-gray-900 dark:bg-slate-800 dark:text-gray-100"
-        >
+        <option key={o.code} value={o.code}>
           {o.label}
         </option>
       ))}
