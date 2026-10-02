@@ -21,7 +21,7 @@ export default function CountrySelect({ regions, value, onChange }: Props) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      aria-label="Country"
+      aria-label="País"
       className="rounded-lg border border-gray-300 bg-transparent p-2 text-sm dark:border-gray-700 dark:bg-gray-950"
     >
       {options.map((o) => (

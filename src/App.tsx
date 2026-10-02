@@ -58,7 +58,7 @@ function App() {
     <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       <main className="mx-auto max-w-2xl p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold">Where to watch</h1>
+          <h1 className="text-2xl font-semibold">¿Dónde ver?</h1>
           {regions.length > 0 && (
             <CountrySelect
               regions={regions}
@@ -70,13 +70,13 @@ function App() {
 
         <input
           type="search"
-          placeholder="Search a movie or series"
+          placeholder="Busca una película o serie"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="w-full rounded-lg border border-gray-300 bg-transparent p-3 outline-none focus:border-blue-500 dark:border-gray-700"
         />
 
-        {loading && <p className="mt-4 text-sm text-gray-500">Loading…</p>}
+        {loading && <p className="mt-4 text-sm text-gray-500">Cargando…</p>}
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
         <ul className="mt-4 divide-y divide-gray-200 dark:divide-gray-800">
