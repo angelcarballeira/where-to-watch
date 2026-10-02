@@ -55,10 +55,10 @@ function App() {
   }, [query]);
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-100 text-gray-900 dark:from-slate-950 dark:via-indigo-950 dark:to-blue-950 dark:text-gray-100">
       <main className="mx-auto max-w-2xl p-6">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold">¿Dónde ver?</h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-4xl font-bold tracking-tight">¿Dónde ver?</h1>
           {regions.length > 0 && (
             <CountrySelect
               regions={regions}
@@ -73,7 +73,7 @@ function App() {
           placeholder="Busca una película o serie"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 bg-transparent p-3 outline-none focus:border-blue-500 dark:border-gray-700"
+          className="w-full rounded-lg border border-gray-300 bg-white/70 dark:bg-white/5 p-3 outline-none focus:border-blue-500 dark:border-gray-700"
         />
 
         {loading && <p className="mt-4 text-sm text-gray-500">Cargando…</p>}
