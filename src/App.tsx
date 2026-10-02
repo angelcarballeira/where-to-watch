@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { searchTitles } from './api/tmdb';
-import type { SearchResult } from './types';
+import { getRegions, searchTitles } from './api/tmdb';
+import CountrySelect from './components/CountrySelect';
+import ProviderList from './components/ProviderList';
+import type { Region, SearchResult } from './types';
 
 const IMG_URL = 'https://image.tmdb.org/t/p/w185';
 
@@ -9,6 +11,20 @@ function App() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [country, setCountry] = useState(
+    () => localStorage.getItem('country') ?? 'AR',
+  );
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    getRegions().then(setRegions).catch(() => setRegions([]));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('country', country);
+  }, [country]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -41,7 +57,16 @@ function App() {
   return (
     <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="mb-4 text-2xl font-semibold">Where to watch</h1>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold">Where to watch</h1>
+          {regions.length > 0 && (
+            <CountrySelect
+              regions={regions}
+              value={country}
+              onChange={setCountry}
+            />
+          )}
+        </div>
 
         <input
           type="search"
@@ -56,30 +81,46 @@ function App() {
 
         <ul className="mt-4 divide-y divide-gray-200 dark:divide-gray-800">
           {results.map((r) => {
+            const key = `${r.media_type}-${r.id}`;
+            const isSelected = key === selectedKey;
             const main = r.title ?? r.name;
             const original = r.original_title ?? r.original_name;
             const date = r.release_date ?? r.first_air_date;
+
             return (
-              <li key={`${r.media_type}-${r.id}`} className="flex gap-3 py-3">
-                {r.poster_path ? (
-                  <img
-                    src={`${IMG_URL}${r.poster_path}`}
-                    alt={main}
-                    className="h-23 w-16 shrink-0 rounded-md object-cover"
-                  />
-                ) : (
-                  <div className="h-23 w-16 shrink-0 rounded-md bg-gray-200 dark:bg-gray-800" />
-                )}
-                <div>
-                  <strong>{main}</strong>
-                  {original && original !== main && (
-                    <div className="text-sm text-gray-500">{original}</div>
+              <li key={key} className="py-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedKey(isSelected ? null : key)}
+                  aria-expanded={isSelected}
+                  className="flex w-full gap-3 text-left"
+                >
+                  {r.poster_path ? (
+                    <img
+                      src={`${IMG_URL}${r.poster_path}`}
+                      alt=""
+                      className="h-[92px] w-16 shrink-0 rounded-md object-cover"
+                    />
+                  ) : (
+                    <div className="h-[92px] w-16 shrink-0 rounded-md bg-gray-200 dark:bg-gray-800" />
                   )}
-                  <div className="mt-1 text-xs text-gray-400">
-                    {r.media_type === 'movie' ? 'Movie' : 'Series'}
-                    {date && ` · ${date.slice(0, 4)}`}
+                  <div>
+                    <strong>{main}</strong>
+                    {original && original !== main && (
+                      <div className="text-sm text-gray-500">{original}</div>
+                    )}
+                    <div className="mt-1 text-xs text-gray-400">
+                      {r.media_type === 'movie' ? 'Movie' : 'Series'}
+                      {date && ` · ${date.slice(0, 4)}`}
+                    </div>
                   </div>
-                </div>
+                </button>
+
+                {isSelected && (
+                  <div className="mt-3 pl-[76px]">
+                    <ProviderList item={r} country={country} />
+                  </div>
+                )}
               </li>
             );
           })}
